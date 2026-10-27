@@ -1,1 +1,14 @@
-# ak-smart-ai-
+{
+  "name": "ak-smart-ai",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "openai": "^5.0.0"
+  }
+}
