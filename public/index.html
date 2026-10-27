@@ -1,0 +1,288 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#081326">
+<title>AK Smart AI</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#081326;
+  --panel:#101f36;
+  --blue:#39c6ff;
+  --text:#f3f7ff;
+  --muted:#a7b7d0;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,Arial,sans-serif;
+  min-height:100dvh;
+}
+header{
+  position:sticky;top:0;z-index:2;
+  background:#081326ed;
+  border-bottom:1px solid #263851;
+  padding:14px;
+  display:flex;align-items:center;gap:12px;
+}
+.logo{
+  width:43px;height:43px;
+  display:grid;place-items:center;
+  border-radius:14px;
+  background:linear-gradient(135deg,#38caff,#4769ff);
+  color:#06152b;font-size:24px;font-weight:900;
+}
+h1{font-size:18px;margin:0}
+.sub{font-size:12px;color:var(--muted);margin-top:3px}
+#newChat{
+  margin-left:auto;
+  background:#1b2b43;color:white;
+  border:1px solid #344762;
+  border-radius:10px;padding:10px;
+}
+main{
+  max-width:760px;
+  margin:auto;
+  padding:20px 14px 150px;
+}
+.welcome{
+  text-align:center;
+  padding:38px 10px 20px;
+}
+.welcome .big{font-size:45px}
+.welcome h2{font-size:25px;margin:12px 0}
+.welcome p{color:var(--muted);line-height:1.7}
+.suggestions{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:9px;margin-top:20px;
+}
+.suggestions button{
+  background:var(--panel);color:var(--text);
+  border:1px solid #2b405c;
+  border-radius:14px;padding:13px;
+  text-align:left;line-height:1.5;
+}
+#chat{display:flex;flex-direction:column;gap:18px}
+.message{max-width:100%;line-height:1.7;overflow-wrap:anywhere}
+.user{
+  align-self:flex-end;
+  background:#18395a;border-radius:17px 17px 4px 17px;
+  padding:12px 15px;max-width:90%;
+}
+.assistant{
+  background:var(--panel);
+  border:1px solid #263b56;
+  border-radius:16px;padding:15px;
+}
+.message h3{font-size:16px}
+.message a{color:var(--blue);overflow-wrap:anywhere}
+.sources{border-top:1px solid #314158;margin-top:14px;padding-top:10px}
+.sources a{display:block;margin:9px 0;font-size:14px}
+#status{color:var(--muted);font-size:13px;margin:10px 2px}
+.composer{
+  position:fixed;bottom:0;left:0;right:0;
+  background:linear-gradient(transparent,var(--bg) 14%);
+  padding:20px 12px calc(12px + env(safe-area-inset-bottom));
+}
+form{
+  max-width:760px;margin:auto;
+  display:flex;align-items:flex-end;gap:9px;
+  background:var(--panel);padding:9px;
+  border:1px solid #344a67;border-radius:18px;
+}
+textarea{
+  flex:1;min-width:0;resize:none;
+  border:0;outline:0;background:transparent;
+  color:var(--text);font:inherit;
+  padding:9px;max-height:120px;
+}
+#send{
+  background:var(--blue);color:#061326;
+  border:0;border-radius:12px;
+  padding:12px 15px;font-weight:800;
+}
+#send:disabled{opacity:.5}
+.note{
+  text-align:center;color:var(--muted);
+  font-size:11px;margin:8px auto 0;
+}
+.hidden{display:none}
+button{cursor:pointer;font:inherit}
+@media(min-width:600px){
+  main{padding-top:30px}
+  .welcome{padding-top:55px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">A</div>
+  <div>
+    <h1>AK Smart AI</h1>
+    <div class="sub">Web Search · Hindi AI Assistant</div>
+  </div>
+  <button id="newChat">＋ नई चैट</button>
+</header>
+
+<main>
+  <section id="welcome" class="welcome">
+    <div class="big">🌐</div>
+    <h2>आज क्या जानना है?</h2>
+    <p>सवाल पूछो। वेब पर जानकारी खोजो और उसका आसान सारांश पाओ।</p>
+    <div class="suggestions">
+      <button data-q="AI क्या है? आसान हिंदी में समझाओ।">🤖 AI के बारे में</button>
+      <button data-q="YouTube वीडियो के SEO को बेहतर कैसे करें?">▶ YouTube SEO</button>
+      <button data-q="HTML, CSS और JavaScript में क्या अंतर है?">💻 कोडिंग सीखें</button>
+      <button data-q="आज की प्रमुख खबरों का सारांश बताओ।">📰 ताजा खबरें</button>
+    </div>
+  </section>
+
+  <section id="chat" aria-live="polite"></section>
+  <div id="status" role="status"></div>
+</main>
+
+<div class="composer">
+  <form id="form">
+    <textarea id="prompt" rows="1"
+      maxlength="4000"
+      placeholder="यहाँ अपना सवाल लिखें..."
+      aria-label="अपना सवाल लिखें"
+      required></textarea>
+    <button id="send" type="submit">➤</button>
+  </form>
+  <div class="note">AI के जवाब गलत भी हो सकते हैं। जरूरी जानकारी स्रोतों से जाँचें।</div>
+</div>
+
+<script>
+const chat = document.getElementById("chat");
+const welcome = document.getElementById("welcome");
+const form = document.getElementById("form");
+const promptBox = document.getElementById("prompt");
+const sendButton = document.getElementById("send");
+const statusBox = document.getElementById("status");
+
+let history = [];
+let busy = false;
+
+function addMessage(role, text, sources = []) {
+  const box = document.createElement("div");
+  box.className = "message " +
+    (role === "user" ? "user" : "assistant");
+
+  // Text को HTML की तरह नहीं चलाते; इससे unsafe HTML से बचाव होता है।
+  const content = document.createElement("div");
+  content.textContent = text;
+  box.appendChild(content);
+
+  if (role === "assistant" && sources.length) {
+    const section = document.createElement("div");
+    section.className = "sources";
+
+    const heading = document.createElement("strong");
+    heading.textContent = "🔗 स्रोत";
+    section.appendChild(heading);
+
+    sources.forEach(source => {
+      try {
+        const url = new URL(source.url);
+        if (url.protocol !== "https:" &&
+            url.protocol !== "http:") return;
+
+        const link = document.createElement("a");
+        link.href = url.href;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = source.title || url.hostname;
+        section.appendChild(link);
+      } catch (_) {}
+    });
+
+    box.appendChild(section);
+  }
+
+  chat.appendChild(box);
+  window.scrollTo({
+    top: document.body.scrollHeight,
+    behavior: "smooth"
+  });
+}
+
+async function ask(question) {
+  if (busy || !question.trim()) return;
+
+  busy = true;
+  welcome.classList.add("hidden");
+  sendButton.disabled = true;
+  statusBox.textContent = "वेब पर खोजकर जवाब तैयार हो रहा है...";
+
+  const userMessage = question.trim();
+  addMessage("user", userMessage);
+  history.push({role:"user", content:userMessage});
+  promptBox.value = "";
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        messages: history.slice(-10)
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "सर्वर से जवाब नहीं मिला।");
+    }
+
+    const answer = data.answer || "जवाब नहीं मिला।";
+    addMessage("assistant", answer, data.sources || []);
+    history.push({role:"assistant", content:answer});
+
+    // अगले सवाल के लिए हाल के संदेश ही रखें।
+    history = history.slice(-10);
+    statusBox.textContent = "जवाब तैयार है।";
+  } catch (error) {
+    // विफल अनुरोध को इतिहास से हटाएँ, ताकि उसे दोबारा भेज सकें।
+    history.pop();
+    addMessage("assistant", "⚠️ " + error.message);
+    statusBox.textContent = "कनेक्शन जाँचकर दोबारा कोशिश करें।";
+  } finally {
+    busy = false;
+    sendButton.disabled = false;
+    promptBox.focus();
+  }
+}
+
+form.addEventListener("submit", event => {
+  event.preventDefault();
+  ask(promptBox.value);
+});
+
+document.querySelectorAll("[data-q]").forEach(button => {
+  button.addEventListener("click", () => {
+    ask(button.dataset.q);
+  });
+});
+
+document.getElementById("newChat").addEventListener("click", () => {
+  history = [];
+  chat.replaceChildren();
+  welcome.classList.remove("hidden");
+  statusBox.textContent = "";
+  promptBox.value = "";
+});
+
+promptBox.addEventListener("input", () => {
+  promptBox.style.height = "auto";
+  promptBox.style.height =
+    Math.min(promptBox.scrollHeight, 120) + "px";
+});
+</script>
+</body>
+</html>
